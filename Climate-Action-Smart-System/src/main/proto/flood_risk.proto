@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+option java_package = "com.climate.grpc";
+option java_outer_classname = "FloodRiskProto";
+option java_multiple_files = true;
+
+package floodrisk;
+
+
+service FloodRiskService {
+
+    // Client-side Streaming RPC: Upload a batch of rainfall sensor readings;
+    // server processes them all and returns a flood risk summary
+    rpc ReportRainfallReadings (stream RainfallRequest) returns (FloodRiskResponse);
+
+    // Bidirectional Streaming RPC: Real-time water-level monitoring —
+    // client streams sensor updates; server streams back live flood alerts
+    rpc MonitorFloodAlerts (stream FloodUpdate) returns (stream FloodAlert);
+}
+
+// A single rainfall sensor reading sent by the client
+message RainfallRequest {
+    string sensorId   = 1;   // Sensor identifier, e.g. "SENSOR_LIFFEY_01"
+    float  rainfallMM = 2;   // Rainfall intensity in mm per hour
+    string location   = 3;   // Geographic area, e.g. "WICKLOW"
+}
+
+// Summary response returned after all client readings have been processed
+message FloodRiskResponse {
+    float  averageRainfall = 1;   // Mean rainfall in mm/hr across all readings
+    float  maxRainfall     = 2;   // Peak reading across all submitted sensors
+    string riskLevel       = 3;   // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+    int32  readingsCount   = 4;   // Total number of readings received
+    string message         = 5;   // Human-readable summary
+}
+
+// A real-time water-level update sent by a client sensor
+message FloodUpdate {
+    string sensorId   = 1;   // e.g. "WL_SENSOR_WICKLOW_01"
+    float  waterLevel = 2;   // Current water level in metres
+    string location   = 3;   // Geographic area
+}
+
+// A live flood alert issued by the server in response to a FloodUpdate
+message FloodAlert {
+    string sensorId        = 1;
+    string riskLevel       = 2;   // "LOW", "MEDIUM", "HIGH", "CRITICAL"
+    string advisoryMessage = 3;   // Human-readable action advice
+    string timestamp       = 4;   // ISO-8601 timestamp of the alert
+}

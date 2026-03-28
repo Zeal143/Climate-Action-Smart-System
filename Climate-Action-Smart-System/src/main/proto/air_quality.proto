@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+option java_package = "com.climate.grpc";
+option java_outer_classname = "AirQualityProto";
+option java_multiple_files = true;
+
+package airquality;
+
+service AirQualityService {
+
+    // Unary RPC: Get current air quality snapshot for a location
+    rpc GetCurrentAirQuality (AirQualityRequest) returns (AirQualityResponse);
+
+    // Server-side Streaming RPC: Continuously stream live air quality readings
+    rpc StreamAirQualityReadings (AirQualityRequest) returns (stream AirQualityReading);
+}
+
+// Request: identifies the monitoring location
+message AirQualityRequest {
+    string location = 1;   // e.g. "DUBLIN", "LONDON", "BEIJING"
+}
+
+// Response for Unary RPC: full snapshot of current air quality
+message AirQualityResponse {
+    float  aqi       = 1;   // Air Quality Index (0–500; higher = worse)
+    float  co2Level  = 2;   // CO2 concentration in parts-per-million
+    string status    = 3;   // "GOOD", "MODERATE", "UNHEALTHY", "HAZARDOUS"
+    string location  = 4;   // Echo of the requested location
+    string timestamp = 5;   // ISO-8601 timestamp of the reading
+}
+
+// Response for Server Streaming RPC: individual readings streamed over time
+message AirQualityReading {
+    float  aqi       = 1;
+    float  co2Level  = 2;
+    string timestamp = 3;
+    string location  = 4;
+}

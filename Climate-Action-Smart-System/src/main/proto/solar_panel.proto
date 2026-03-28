@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+option java_package = "com.climate.grpc";
+option java_outer_classname = "SolarPanelProto";
+option java_multiple_files = true;
+
+package solarpanel;
+
+
+service SolarPanelService {
+
+    // Unary RPC: Get the current status of a specific solar panel
+    rpc GetPanelStatus (PanelRequest) returns (PanelStatusResponse);
+
+    // Server-side Streaming RPC: Stream live energy production data for a panel
+    rpc StreamEnergyProduction (PanelRequest) returns (stream EnergyReading);
+
+    // Unary RPC: Remotely adjust the tilt angle of a solar panel
+    rpc AdjustPanelConfiguration (ConfigRequest) returns (ConfigResponse);
+
+    // Client-side Streaming RPC: Upload a batch of historical energy readings
+    // from multiple panels; server returns an aggregated summary
+    rpc UploadEnergyBatch (stream EnergyBatchEntry) returns (EnergyBatchSummary);
+}
+
+// Identifies a specific solar panel by its ID
+message PanelRequest {
+    string panelId = 1;   // e.g. "PANEL_DUBLIN_01"
+}
+
+// Full status snapshot of a single solar panel
+message PanelStatusResponse {
+    string panelId     = 1;
+    float  powerOutput = 2;   // Current power output in Watts
+    float  efficiency  = 3;   // Panel efficiency as a percentage (0–100)
+    string status      = 4;   // "ACTIVE", "DEGRADED", "OFFLINE"
+    float  temperature = 5;   // Panel surface temperature in Celsius
+    string lastUpdated = 6;   // ISO-8601 timestamp of the last update
+}
+
+// A single live energy production reading (used in server streaming)
+message EnergyReading {
+    float  energyKwh     = 1;   // Energy generated since the last reading (kWh)
+    float  sunlightLevel = 2;   // Solar irradiance in W/m²
+    string timestamp     = 3;
+    string panelId       = 4;
+}
+
+// Request to change the tilt angle of a solar panel
+message ConfigRequest {
+    string panelId  = 1;
+    float  newAngle = 2;   // Target tilt angle in degrees (0–90)
+}
+
+// Result of an angle adjustment operation
+message ConfigResponse {
+    bool   success      = 1;   // true if the adjustment was applied
+    string message      = 2;   // Confirmation or error description
+    float  appliedAngle = 3;   // The angle that was actually applied
+}
+
+// A single historical entry used in the batch upload stream
+message EnergyBatchEntry {
+    string panelId   = 1;
+    float  energyKwh = 2;
+    string timestamp = 3;
+}
+
+// Aggregated summary returned after all batch entries have been received
+message EnergyBatchSummary {
+    int32  recordsReceived  = 1;
+    float  totalEnergyKwh   = 2;
+    float  averageEnergyKwh = 3;
+    float  peakEnergyKwh    = 4;
+    string message          = 5;
+}
