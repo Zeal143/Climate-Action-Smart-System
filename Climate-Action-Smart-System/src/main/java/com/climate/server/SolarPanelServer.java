@@ -23,19 +23,6 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-/**
- * SolarPanelServer – gRPC server for the Solar Panel Management service.
- *
- * Implements three RPC styles (plus a second Unary):
- *   1. Unary RPC             – GetPanelStatus
- *   2. Unary RPC             – AdjustPanelConfiguration
- *   3. Server-side Streaming – StreamEnergyProduction
- *   4. Client-side Streaming – UploadEnergyBatch
- *
- * Registers itself with JmDNS on startup.
- *
- * UN SDG 13: Climate Action
- */
 public class SolarPanelServer {
 
     private static final Logger logger = Logger.getLogger(SolarPanelServer.class.getName());
@@ -61,41 +48,41 @@ public class SolarPanelServer {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down SolarPanelServer...");
             server.shutdown();
-            try { reg.close(); } catch (IOException ignored) {}
+            try {
+                reg.close();
+            } catch (IOException ignored) {
+            }
         }));
 
         server.awaitTermination();
     }
 
-    // =========================================================================
     // Service Implementation
-    // =========================================================================
-
     static class SolarPanelServiceImpl extends SolarPanelServiceGrpc.SolarPanelServiceImplBase {
 
-        private static final Random  random = new Random();
-        private static final DateTimeFormatter FMT =
-                DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+        private static final Random random = new Random();
+        private static final DateTimeFormatter FMT
+                = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
         // Simulated panel registry (panelId → current tilt angle)
-        private static final java.util.Map<String, Float> panelAngles =
-                new java.util.concurrent.ConcurrentHashMap<>();
+        private static final java.util.Map<String, Float> panelAngles
+                = new java.util.concurrent.ConcurrentHashMap<>();
 
         static {
             panelAngles.put("PANEL_DUBLIN_01", 35.0f);
             panelAngles.put("PANEL_DUBLIN_02", 40.0f);
-            panelAngles.put("PANEL_CORK_01",   38.0f);
+            panelAngles.put("PANEL_CORK_01", 38.0f);
         }
 
-        // ── Unary RPC: GetPanelStatus ─────────────────────────────────────────
+        // Unary RPC: GetPanelStatus
         @Override
         public void getPanelStatus(PanelRequest request,
-                                   StreamObserver<PanelStatusResponse> responseObserver) {
+                StreamObserver<PanelStatusResponse> responseObserver) {
 
             String panelId = request.getPanelId().trim();
             logger.info("[Unary] GetPanelStatus for: " + panelId);
 
-            // ── Remote Error Handling ─────────────────────────────────────────
+            // Remote Error Handling 
             if (panelId.isEmpty()) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
                         .withDescription("Panel ID must not be empty.")
@@ -110,11 +97,11 @@ public class SolarPanelServer {
                 return;
             }
 
-            float power       = 150 + random.nextFloat() * 350;
-            float efficiency  = 60 + random.nextFloat() * 35;
+            float power = 150 + random.nextFloat() * 350;
+            float efficiency = 60 + random.nextFloat() * 35;
             float temperature = 25 + random.nextFloat() * 30;
-            String status     = efficiency > 80 ? "ACTIVE"
-                              : efficiency > 50 ? "DEGRADED" : "OFFLINE";
+            String status = efficiency > 80 ? "ACTIVE"
+                    : efficiency > 50 ? "DEGRADED" : "OFFLINE";
 
             PanelStatusResponse response = PanelStatusResponse.newBuilder()
                     .setPanelId(panelId)
@@ -131,17 +118,17 @@ public class SolarPanelServer {
                     + " power=" + String.format("%.1f", power) + "W for " + panelId);
         }
 
-        // ── Unary RPC: AdjustPanelConfiguration ──────────────────────────────
+        // Unary RPC: AdjustPanelConfiguration
         @Override
         public void adjustPanelConfiguration(ConfigRequest request,
-                                             StreamObserver<ConfigResponse> responseObserver) {
+                StreamObserver<ConfigResponse> responseObserver) {
 
             String panelId = request.getPanelId().trim();
-            float  angle   = request.getNewAngle();
+            float angle = request.getNewAngle();
             logger.info("[Unary] AdjustPanelConfiguration: panelId=" + panelId
                     + " angle=" + angle);
 
-            // ── Remote Error Handling ─────────────────────────────────────────
+            // Remote Error Handling
             if (panelId.isEmpty()) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
                         .withDescription("Panel ID must not be empty.")
@@ -176,10 +163,10 @@ public class SolarPanelServer {
             logger.info("[Unary] Angle updated for " + panelId + " → " + angle + "°");
         }
 
-        // ── Server-side Streaming RPC: StreamEnergyProduction ─────────────────
+        // Server-side Streaming RPC: StreamEnergyProduction
         @Override
         public void streamEnergyProduction(PanelRequest request,
-                                           StreamObserver<EnergyReading> responseObserver) {
+                StreamObserver<EnergyReading> responseObserver) {
 
             String panelId = request.getPanelId().trim();
             logger.info("[ServerStream] StreamEnergyProduction for: " + panelId);
@@ -194,7 +181,7 @@ public class SolarPanelServer {
             try {
                 for (int i = 1; i <= 10; i++) {
 
-                    // ── Cancellation support ──────────────────────────────────
+                    // Cancellation support 
                     if (Context.current().isCancelled()) {
                         logger.info("[ServerStream] Cancelled by client after " + i + " readings.");
                         responseObserver.onError(Status.CANCELLED
@@ -203,8 +190,8 @@ public class SolarPanelServer {
                         return;
                     }
 
-                    float energy    = 0.5f + random.nextFloat() * 4.5f;
-                    float sunlight  = 200 + random.nextFloat() * 800;
+                    float energy = 0.5f + random.nextFloat() * 4.5f;
+                    float sunlight = 200 + random.nextFloat() * 800;
 
                     EnergyReading reading = EnergyReading.newBuilder()
                             .setEnergyKwh(energy)
@@ -231,7 +218,7 @@ public class SolarPanelServer {
             }
         }
 
-        // ── Client-side Streaming RPC: UploadEnergyBatch ─────────────────────
+        // Client-side Streaming RPC: UploadEnergyBatch 
         @Override
         public StreamObserver<EnergyBatchEntry> uploadEnergyBatch(
                 StreamObserver<EnergyBatchSummary> responseObserver) {
@@ -276,7 +263,7 @@ public class SolarPanelServer {
                     float total = 0, peak = 0;
                     for (float v : energyValues) {
                         total += v;
-                        peak   = Math.max(peak, v);
+                        peak = Math.max(peak, v);
                     }
                     float avg = total / count;
 
@@ -299,14 +286,13 @@ public class SolarPanelServer {
         }
     }
 
-    // =========================================================================
-    // Server Interceptor – Metadata logging
-    // =========================================================================
+
+    // Server Interceptor 
 
     static class MetadataLoggingInterceptor implements ServerInterceptor {
 
-        static final Metadata.Key<String> CLIENT_ID_KEY =
-                Metadata.Key.of("client-id", Metadata.ASCII_STRING_MARSHALLER);
+        static final Metadata.Key<String> CLIENT_ID_KEY
+                = Metadata.Key.of("client-id", Metadata.ASCII_STRING_MARSHALLER);
 
         @Override
         public <ReqT, RespT> Listener<ReqT> interceptCall(
