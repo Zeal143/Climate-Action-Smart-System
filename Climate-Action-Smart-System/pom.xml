@@ -4,7 +4,7 @@
     <artifactId>climate-action-grpc</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <name>Final Climate Action Smart System</name>
+    <name>Climate Action Smart System</name>
    
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
