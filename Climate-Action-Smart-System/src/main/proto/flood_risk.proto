@@ -1,38 +1,48 @@
 syntax = "proto3";
 
 option java_package = "com.climate.grpc";
-option java_outer_classname = "AirQualityProto";
+option java_outer_classname = "FloodRiskProto";
 option java_multiple_files = true;
 
-package airquality;
+package floodrisk;
 
-service AirQualityService {
 
-    // Unary RPC
-    rpc GetCurrentAirQuality (AirQualityRequest) returns (AirQualityResponse);
+service FloodRiskService {
 
-    // Server-side Streaming RPC
-    rpc StreamAirQualityReadings (AirQualityRequest) returns (stream AirQualityReading);
+    // Client-side Streaming RPC
+    rpc ReportRainfallReadings (stream RainfallRequest) returns (FloodRiskResponse);
+
+    // Bidirectional Streaming RPC
+    rpc MonitorFloodAlerts (stream FloodUpdate) returns (stream FloodAlert);
 }
 
-// Request: identifies the monitoring location
-message AirQualityRequest {
-    string location = 1;   
+// A single rainfall sensor reading sent by the client
+message RainfallRequest {
+    string sensorId   = 1;   
+    float  rainfallMM = 2;   
+    string location   = 3;   
 }
 
-
-message AirQualityResponse {
-    float  aqi       = 1;   
-    float  co2Level  = 2;   
-    string status    = 3;   
-    string location  = 4;   
-    string timestamp = 5;   
+// Summary response returned after all client readings have been processed
+message FloodRiskResponse {
+    float  averageRainfall = 1;   
+    float  maxRainfall     = 2;  
+    string riskLevel       = 3;   
+    int32  readingsCount   = 4;  
+    string message         = 5;  
 }
 
-// individual readings streamed over time
-message AirQualityReading {
-    float  aqi       = 1;
-    float  co2Level  = 2;
-    string timestamp = 3;
-    string location  = 4;
+// A real-time water-level update sent by a client sensor
+message FloodUpdate {
+    string sensorId   = 1;   
+    float  waterLevel = 2;   
+    string location   = 3;   
+}
+
+// A live flood alert issued by the server in response to a FloodUpdate
+message FloodAlert {
+    string sensorId        = 1;
+    string riskLevel       = 2;   
+    string advisoryMessage = 3;   
+    string timestamp       = 4;  
 }
