@@ -17,19 +17,19 @@ service AirQualityService {
 
 // Request: identifies the monitoring location
 message AirQualityRequest {
-    string location = 1;   // e.g. "DUBLIN", "LONDON", "BEIJING"
+    string location = 1;   
 }
 
-// Response for Unary RPC: full snapshot of current air quality
+
 message AirQualityResponse {
-    float  aqi       = 1;   // Air Quality Index (0–500; higher = worse)
-    float  co2Level  = 2;   // CO2 concentration in parts-per-million
-    string status    = 3;   // "GOOD", "MODERATE", "UNHEALTHY", "HAZARDOUS"
-    string location  = 4;   // Echo of the requested location
-    string timestamp = 5;   // ISO-8601 timestamp of the reading
+    float  aqi       = 1;   
+    float  co2Level  = 2;   
+    string status    = 3;   
+    string location  = 4;   
+    string timestamp = 5;   
 }
 
-// Response for Server Streaming RPC: individual readings streamed over time
+// individual readings streamed over time
 message AirQualityReading {
     float  aqi       = 1;
     float  co2Level  = 2;
