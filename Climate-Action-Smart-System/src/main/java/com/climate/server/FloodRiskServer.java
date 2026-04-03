@@ -21,17 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
-/**
- * FloodRiskServer – gRPC server for the Flood Risk and Rainfall Alert service.
- *
- * Implements two RPC styles:
- *   1. Client-side Streaming   – ReportRainfallReadings
- *   2. Bidirectional Streaming – MonitorFloodAlerts
- *
- * Registers itself with JmDNS on startup.
- *
- * UN SDG 13: Climate Action
- */
+
 public class FloodRiskServer {
 
     private static final Logger logger = Logger.getLogger(FloodRiskServer.class.getName());
@@ -63,18 +53,15 @@ public class FloodRiskServer {
         server.awaitTermination();
     }
 
-    // =========================================================================
     // Service Implementation
-    // =========================================================================
 
     static class FloodRiskServiceImpl extends FloodRiskServiceGrpc.FloodRiskServiceImplBase {
 
         private static final DateTimeFormatter FMT =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-        // ── Client-side Streaming RPC ─────────────────────────────────────────
-        // Client sends multiple RainfallRequest messages; server accumulates them
-        // and replies with a single FloodRiskResponse once the stream closes.
+        // Client-side Streaming RPC 
+
         @Override
         public StreamObserver<RainfallRequest> reportRainfallReadings(
                 StreamObserver<FloodRiskResponse> responseObserver) {
@@ -89,7 +76,7 @@ public class FloodRiskServer {
 
                 @Override
                 public void onNext(RainfallRequest req) {
-                    // ── Remote Error Handling ─────────────────────────────────
+                    //Remote Error Handling
                     if (req.getRainfallMM() < 0) {
                         responseObserver.onError(Status.INVALID_ARGUMENT
                                 .withDescription("Rainfall reading cannot be negative. "
@@ -140,9 +127,8 @@ public class FloodRiskServer {
             };
         }
 
-        // ── Bidirectional Streaming RPC ───────────────────────────────────────
-        // Client continuously sends FloodUpdate messages; server responds with
-        // a FloodAlert for each one in real time.
+        //Bidirectional Streaming RPC
+
         @Override
         public StreamObserver<FloodUpdate> monitorFloodAlerts(
                 StreamObserver<FloodAlert> responseObserver) {
@@ -157,7 +143,7 @@ public class FloodRiskServer {
                             + update.getSensorId()
                             + " waterLevel=" + update.getWaterLevel() + "m");
 
-                    // ── Remote Error Handling ─────────────────────────────────
+                    // Remote Error Handling 
                     if (update.getWaterLevel() < 0) {
                         responseObserver.onError(Status.INVALID_ARGUMENT
                                 .withDescription("Water level cannot be negative. Sensor: "
@@ -203,7 +189,7 @@ public class FloodRiskServer {
             };
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
+        // Helpers
 
         private String classifyFloodRisk(float avgMM, float maxMM) {
             if (maxMM > 80 || avgMM > 50) return "CRITICAL";
@@ -229,9 +215,7 @@ public class FloodRiskServer {
         }
     }
 
-    // =========================================================================
-    // Server Interceptor – Deadline / Metadata demo
-    // =========================================================================
+    // Server Interceptor 
 
     static class DeadlineInterceptor implements ServerInterceptor {
 
