@@ -1,129 +1,95 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-         http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-
     <groupId>com.climate</groupId>
     <artifactId>climate-action-grpc</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-
-    <name>Climate Action Smart System</name>
-    <description>
-        Distributed Systems CA – Smart Climate Monitoring System
-        Supporting UN SDG 13: Climate Action
-        Services: Air Quality, Flood Risk, Solar Panel Management
-    </description>
-
+    <name>Final Climate Action Smart System</name>
+   
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <!-- Dependency versions -->
+    
         <grpc.version>1.62.2</grpc.version>
         <protobuf.version>3.25.3</protobuf.version>
         <jmdns.version>3.5.9</jmdns.version>
         <protobuf.plugin.version>0.6.1</protobuf.plugin.version>
         <os.plugin.version>1.7.1</os.plugin.version>
     </properties>
-
     <dependencies>
-
-        <!-- ===== gRPC Core ===== -->
+   
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-netty-shaded</artifactId>
             <version>${grpc.version}</version>
         </dependency>
-
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-protobuf</artifactId>
             <version>${grpc.version}</version>
         </dependency>
-
         <dependency>
             <groupId>io.grpc</groupId>
             <artifactId>grpc-stub</artifactId>
             <version>${grpc.version}</version>
         </dependency>
 
-        <!-- Required for generated gRPC code annotations -->
         <dependency>
             <groupId>javax.annotation</groupId>
             <artifactId>javax.annotation-api</artifactId>
             <version>1.3.2</version>
         </dependency>
 
-        <!-- ===== Protobuf Runtime ===== -->
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
         </dependency>
-
-        <!-- ===== JmDNS – Service Registration & Discovery ===== -->
+ 
         <dependency>
             <groupId>org.jmdns</groupId>
             <artifactId>jmdns</artifactId>
             <version>${jmdns.version}</version>
         </dependency>
-
-        <!-- ===== Logging ===== -->
+  
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>2.0.12</version>
         </dependency>
-
     </dependencies>
-
     <build>
         <extensions>
-            <!-- OS detection for protoc binary selection -->
+ 
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
                 <version>${os.plugin.version}</version>
             </extension>
         </extensions>
-
         <plugins>
 
-            <!-- ===== Protobuf / gRPC Code Generation ===== -->
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>${protobuf.plugin.version}</version>
                 <configuration>
-                    <!-- Protoc binary pulled from Maven Central automatically -->
-                    <protocArtifact>
-                        com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}
-                    </protocArtifact>
+                    <protocArtifact> com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier} </protocArtifact>
                     <pluginId>grpc-java</pluginId>
-                    <pluginArtifact>
-                        io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
-                    </pluginArtifact>
-                    <!-- Look for .proto files in src/main/proto -->
+                    <pluginArtifact> io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier} </pluginArtifact>
                     <protoSourceRoot>${project.basedir}/src/main/proto</protoSourceRoot>
                 </configuration>
                 <executions>
                     <execution>
                         <goals>
-                            <!-- Compile .proto → Java message classes -->
                             <goal>compile</goal>
-                            <!-- Compile .proto → gRPC service stubs -->
                             <goal>compile-custom</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
 
-            <!-- ===== Maven Compiler ===== -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -134,8 +100,6 @@
                 </configuration>
             </plugin>
 
-            <!-- ===== Shade Plugin – build a fat JAR ===== -->
-            <!-- Useful for running servers and client independently -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -162,8 +126,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
-
 </project>
