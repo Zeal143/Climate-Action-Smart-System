@@ -1,48 +1,76 @@
 syntax = "proto3";
 
 option java_package = "com.climate.grpc";
-option java_outer_classname = "FloodRiskProto";
+option java_outer_classname = "SolarPanelProto";
 option java_multiple_files = true;
 
-package floodrisk;
+package solarpanel;
 
 
-service FloodRiskService {
+service SolarPanelService {
+
+    // Unary RPC
+    rpc GetPanelStatus (PanelRequest) returns (PanelStatusResponse);
+
+    // Server-side Streaming RPC
+    rpc StreamEnergyProduction (PanelRequest) returns (stream EnergyReading);
+
+    // Unary RPC
+    rpc AdjustPanelConfiguration (ConfigRequest) returns (ConfigResponse);
 
     // Client-side Streaming RPC
-    rpc ReportRainfallReadings (stream RainfallRequest) returns (FloodRiskResponse);
-
-    // Bidirectional Streaming RPC
-    rpc MonitorFloodAlerts (stream FloodUpdate) returns (stream FloodAlert);
+    // from multiple panels; server returns an aggregated summary
+    rpc UploadEnergyBatch (stream EnergyBatchEntry) returns (EnergyBatchSummary);
 }
 
-// A single rainfall sensor reading sent by the client
-message RainfallRequest {
-    string sensorId   = 1;   
-    float  rainfallMM = 2;   
-    string location   = 3;   
+// Identifies a specific solar panel by its ID
+message PanelRequest {
+    string panelId = 1;   
 }
 
-// Summary response returned after all client readings have been processed
-message FloodRiskResponse {
-    float  averageRainfall = 1;   
-    float  maxRainfall     = 2;  
-    string riskLevel       = 3;   
-    int32  readingsCount   = 4;  
-    string message         = 5;  
+// Full status snapshot of a single solar panel
+message PanelStatusResponse {
+    string panelId     = 1;
+    float  powerOutput = 2;  
+    float  efficiency  = 3;  
+    string status      = 4;   
+    float  temperature = 5;   
+    string lastUpdated = 6;   
 }
 
-// A real-time water-level update sent by a client sensor
-message FloodUpdate {
-    string sensorId   = 1;   
-    float  waterLevel = 2;   
-    string location   = 3;   
+// A single live energy production reading (used in server streaming)
+message EnergyReading {
+    float  energyKwh     = 1;   
+    float  sunlightLevel = 2;   
+    string timestamp     = 3;
+    string panelId       = 4;
 }
 
-// A live flood alert issued by the server in response to a FloodUpdate
-message FloodAlert {
-    string sensorId        = 1;
-    string riskLevel       = 2;   
-    string advisoryMessage = 3;   
-    string timestamp       = 4;  
+// Request to change the tilt angle of a solar panel
+message ConfigRequest {
+    string panelId  = 1;
+    float  newAngle = 2;   
+}
+
+// Result of an angle adjustment operation
+message ConfigResponse {
+    bool   success      = 1;   
+    string message      = 2;   
+    float  appliedAngle = 3;   
+}
+
+// A single historical entry used in the batch upload stream
+message EnergyBatchEntry {
+    string panelId   = 1;
+    float  energyKwh = 2;
+    string timestamp = 3;
+}
+
+// Aggregated summary returned after all batch entries have been received
+message EnergyBatchSummary {
+    int32  recordsReceived  = 1;
+    float  totalEnergyKwh   = 2;
+    float  averageEnergyKwh = 3;
+    float  peakEnergyKwh    = 4;
+    string message          = 5;
 }
