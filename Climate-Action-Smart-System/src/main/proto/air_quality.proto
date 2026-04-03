@@ -8,10 +8,10 @@ package airquality;
 
 service AirQualityService {
 
-    // Unary RPC: Get current air quality snapshot for a location
+    // Unary RPC
     rpc GetCurrentAirQuality (AirQualityRequest) returns (AirQualityResponse);
 
-    // Server-side Streaming RPC: Continuously stream live air quality readings
+    // Server-side Streaming RPC
     rpc StreamAirQualityReadings (AirQualityRequest) returns (stream AirQualityReading);
 }
 
