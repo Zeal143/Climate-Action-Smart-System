@@ -22,17 +22,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 
-/**
- * AirQualityServer – gRPC server for the Air Quality Monitoring service.
- *
- * Implements two RPC styles:
- *   1. Unary RPC             – GetCurrentAirQuality
- *   2. Server-side Streaming – StreamAirQualityReadings
- *
- * Registers itself with JmDNS so clients can discover it without hard-coded addresses.
- *
- * UN SDG 13: Climate Action
- */
+
 public class AirQualityServer {
 
     private static final Logger logger = Logger.getLogger(AirQualityServer.class.getName());
@@ -43,21 +33,21 @@ public class AirQualityServer {
 
     public static void main(String[] args) throws IOException, InterruptedException {
 
-        // ── Build and start the gRPC server ─────────────────────────────────
+        // Build and start the gRPC server 
         Server server = ServerBuilder.forPort(PORT)
                 .addService(new AirQualityServiceImpl())
-                .intercept(new AuthInterceptor())          // Metadata / auth demo
+                .intercept(new AuthInterceptor())          
                 .build()
                 .start();
 
         logger.info("AirQualityServer started on port " + PORT);
 
-        // ── Register with JmDNS ──────────────────────────────────────────────
+        // Register with JmDNS
         ClimateServiceRegistration reg = ClimateServiceRegistration.getInstance();
         reg.registerService(SERVICE_TYPE, SERVICE_NAME, PORT,
                 "path=AirQualityService description=AirQualityMonitoring");
 
-        // ── Shutdown hook ────────────────────────────────────────────────────
+        // Shutdown hook 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             logger.info("Shutting down AirQualityServer...");
             server.shutdown();
@@ -67,9 +57,7 @@ public class AirQualityServer {
         server.awaitTermination();
     }
 
-    // =========================================================================
     // Service Implementation
-    // =========================================================================
 
     static class AirQualityServiceImpl extends AirQualityServiceGrpc.AirQualityServiceImplBase {
 
@@ -77,11 +65,11 @@ public class AirQualityServer {
         private static final DateTimeFormatter FMT =
                 DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-        // Known locations for validation
+        // locations for validation
         private static final java.util.Set<String> KNOWN_LOCATIONS =
                 java.util.Set.of("DUBLIN", "LONDON", "BEIJING", "PARIS", "BERLIN");
 
-        // ── Unary RPC ─────────────────────────────────────────────────────────
+        // Unary RPC 
         @Override
         public void getCurrentAirQuality(AirQualityRequest request,
                                          StreamObserver<AirQualityResponse> responseObserver) {
@@ -89,7 +77,7 @@ public class AirQualityServer {
             String location = request.getLocation().toUpperCase().trim();
             logger.info("[Unary] GetCurrentAirQuality for: " + location);
 
-            // ── Remote Error Handling ─────────────────────────────────────────
+            // Remote Error Handling 
             if (location.isEmpty()) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
                         .withDescription("Location must not be empty.")
@@ -122,7 +110,7 @@ public class AirQualityServer {
                     + " status=" + status + " for " + location);
         }
 
-        // ── Server-side Streaming RPC ─────────────────────────────────────────
+        // Server-side Streaming RPC 
         @Override
         public void streamAirQualityReadings(AirQualityRequest request,
                                              StreamObserver<AirQualityReading> responseObserver) {
@@ -130,7 +118,7 @@ public class AirQualityServer {
             String location = request.getLocation().toUpperCase().trim();
             logger.info("[ServerStream] StreamAirQualityReadings for: " + location);
 
-            // ── Remote Error Handling ─────────────────────────────────────────
+            // Remote Error Handling 
             if (location.isEmpty()) {
                 responseObserver.onError(Status.INVALID_ARGUMENT
                         .withDescription("Location must not be empty.")
@@ -142,7 +130,7 @@ public class AirQualityServer {
             try {
                 for (int i = 1; i <= 10; i++) {
 
-                    // Respect client cancellation (Deadline / cancel support)
+                    // client cancellation (Deadline / cancel support)
                     if (Context.current().isCancelled()) {
                         logger.info("[ServerStream] Client cancelled. Stopping stream.");
                         responseObserver.onError(Status.CANCELLED
@@ -178,7 +166,6 @@ public class AirQualityServer {
             }
         }
 
-        // Helper: map AQI value to a human-readable status string
         private String classifyAqi(float aqi) {
             if (aqi <= 50)  return "GOOD";
             if (aqi <= 100) return "MODERATE";
@@ -187,10 +174,9 @@ public class AirQualityServer {
         }
     }
 
-    // =========================================================================
-    // Server Interceptor – Metadata / Authentication demo
-    //   (Satisfies "Use of Metadata, Deadlines, Authentication" mark)
-    // =========================================================================
+
+    // Server Interceptor
+
 
     static class AuthInterceptor implements ServerInterceptor {
 
