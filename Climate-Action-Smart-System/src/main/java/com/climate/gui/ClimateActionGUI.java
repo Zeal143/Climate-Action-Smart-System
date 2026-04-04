@@ -30,7 +30,7 @@ public class ClimateActionGUI extends JFrame {
     // Client
     private final ClimateActionClient client = new ClimateActionClient();
 
-    //Shared result area
+    //Result area
     private JTextArea resultArea;
 
     // Tab 1 : Air Quality 
